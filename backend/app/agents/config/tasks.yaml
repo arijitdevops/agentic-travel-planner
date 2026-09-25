@@ -1,0 +1,151 @@
+# Task definitions (CrewAI convention). {placeholders} are filled from the
+# inputs built in app/services/planner.py. Do not use literal curly braces here.
+
+profile_task:
+  agent: traveler_profiler
+  description: >
+    Analyse this trip request and build the traveler profile.
+
+    TRIP REQUEST
+
+    {trip_brief}
+
+    Today's date is {today}. Derive priorities from the interests and notes, list every
+    hard requirement (dietary, accessibility, children, budget ceiling) under must_haves,
+    and describe the daily rhythm implied by the chosen pace.
+  expected_output: >
+    A TravelerProfile with a short summary, ranked priorities, must-haves, things to avoid,
+    accommodation and flight preferences, and the daily rhythm.
+
+research_task:
+  agent: destination_researcher
+  description: >
+    Research each destination of this trip for the traveler profile you were given.
+
+    TRIP REQUEST
+
+    {trip_brief}
+
+    STAYS
+
+    {stays_text}
+
+    For every destination use the city_guide tool first, then web_search for up-to-date
+    details (seasonal weather for the travel dates, notable events, entry requirements for
+    common passports, current closures). Recommend 5-8 experiences per city matched to
+    the traveler's interests, with a rough cost per person in USD.
+  expected_output: >
+    A DestinationResearch object with one entry per destination, in trip order, plus the
+    list of source URLs you used.
+
+flight_task:
+  agent: flight_specialist
+  description: >
+    Select one flight per leg for this trip ({travelers_text}, cabin {cabin_class}, total
+    trip budget {budget} {currency}).
+
+    LEGS
+
+    {legs_text}
+
+    BOOKABLE FLIGHT OFFERS (id | carrier | times | duration | stops | total price for the party)
+
+    {flight_options}
+
+    Prefer reasonable departure times, fewer stops and shorter journeys unless the price
+    difference is large relative to the budget. If a leg has no suitable offers, use the
+    search_flights tool (for example with an adjacent date). recommended_offer_id and
+    alternative_offer_ids must be ids copied exactly from the offers above or from your
+    tool results. Give up to two alternatives per leg.
+  expected_output: >
+    A FlightSelection with exactly one choice per leg (leg_index starting at 0) and a
+    one-paragraph summary.
+
+hotel_task:
+  agent: hotel_specialist
+  description: >
+    Select one hotel per stay for this trip ({travelers_text}, travel style {travel_style},
+    minimum {hotel_min_stars} stars, total trip budget {budget} {currency}).
+
+    STAYS
+
+    {stays_text}
+
+    BOOKABLE HOTEL OFFERS (id | hotel | area | stars | guest rating | room | total price)
+
+    {hotel_options}
+
+    Use the destination research to prefer well-located areas. Respect accessibility
+    needs and the star floor. You may call search_hotels for more options.
+    recommended_offer_id and alternative_offer_ids must be ids copied exactly from the
+    offers above or from your tool results. Give up to two alternatives per stay.
+  expected_output: >
+    A HotelSelection with exactly one choice per stay (stay_index starting at 0) and a
+    one-paragraph summary.
+
+itinerary_task:
+  agent: itinerary_planner
+  description: >
+    Write the day-by-day itinerary for this trip.
+
+    TRIP REQUEST
+
+    {trip_brief}
+
+    DAY SKELETON (follow it exactly - one DayPlan per line)
+
+    {day_skeleton}
+
+    Use the traveler profile, the destination research and the selected flights and hotels.
+    On travel days, plan around the flight times (airport transfer, check-in/out). Each day
+    needs 3-7 activities with a time, a short description, a category, a location and an
+    estimated cost per person in USD. Include meals that respect dietary needs. Match the
+    pace ({pace}) and keep accessibility needs in mind.
+  expected_output: >
+    An Itinerary with a title, an overview paragraph, exactly {day_count} days in order and
+    a short packing list.
+
+budget_task:
+  agent: budget_analyst
+  description: >
+    Build the budget for the whole party ({travelers_text}) for {nights} nights, travel style
+    {travel_style}. The traveler's total budget is {budget} {currency}.
+
+    Use the prices of the selected flights and hotels exactly as quoted. Use the
+    estimate_daily_costs tool for food, local transport and activities in each city, and
+    compare against the activity costs in the itinerary. Add a 5-10 percent contingency line.
+    Use these categories: Flights, Accommodation, Food and drink, Local transport,
+    Activities and tickets, Contingency. If the total exceeds the budget, give concrete,
+    specific savings tips tied to this plan.
+  expected_output: >
+    A BudgetBreakdown in {currency} with one line per category, the total, the budget,
+    within_budget, savings tips and a short summary.
+
+refine_task:
+  agent: trip_concierge
+  description: >
+    The traveler is refining an existing trip plan.
+
+    TRIP REQUEST
+
+    {trip_brief}
+
+    CURRENT PLAN
+
+    {plan_text}
+
+    RECENT CONVERSATION
+
+    {history}
+
+    TRAVELER MESSAGE
+
+    {message}
+
+    If the message only asks a question, answer it and leave updated_itinerary null and the
+    change lists empty. If it asks for changes to activities or days, return the complete
+    revised itinerary with the same number of days and dates. If it asks for a different
+    flight or hotel, search with your tools and return flight_changes or hotel_changes using
+    the exact offer ids you found, with the same leg_index or stay_index as the plan.
+  expected_output: >
+    A RefinementResult with a helpful markdown reply and a short list of the changes made.

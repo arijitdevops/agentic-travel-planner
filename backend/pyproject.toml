@@ -1,0 +1,18 @@
+[project]
+name = "agentic-travel-planner-backend"
+version = "1.0.0"
+description = "FastAPI + CrewAI (Gemini) multi-agent travel planner backend"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:.*httpx2.*",
+    "ignore:.*callbacks cannot be serialized.*:UserWarning",
+]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"

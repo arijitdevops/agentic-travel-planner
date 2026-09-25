@@ -1,0 +1,22 @@
+# Web API
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic-settings==2.15.0
+email-validator==2.3.0
+
+# Database (MySQL in production, SQLite for tests)
+SQLAlchemy==2.0.54
+PyMySQL==1.2.3
+cryptography==50.0.1   # MySQL 8 caching_sha2_password auth
+tzdata==2026.4         # time-zone data on Windows
+
+# Agents (CrewAI + native Gemini provider)
+crewai[google-genai]==1.15.22
+PyYAML>=6.0,<7
+
+# Web search: DuckDuckGo (no key) or Tavily (optional key)
+ddgs==9.16.0
+tavily-python==0.8.4
+
+# HTTP client (Duffel provider)
+httpx>=0.28.1,<0.29
